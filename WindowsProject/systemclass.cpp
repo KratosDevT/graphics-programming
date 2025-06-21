@@ -1,5 +1,6 @@
 #include "systemclass.h"
 
+
 SystemClass::SystemClass()
 {
 	m_Input = 0;
@@ -117,6 +118,7 @@ bool SystemClass::Frame()
 	{
 		return false;
 	}
+	
 
 	// Do the frame processing for the application class object.
 	result = m_Application->Frame();

@@ -2,7 +2,7 @@
 // Filename: inputclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
 #include "inputclass.h"
-
+#include <iostream>
 
 InputClass::InputClass()
 {
@@ -37,6 +37,7 @@ void InputClass::Initialize()
 void InputClass::KeyDown(unsigned int input)
 {
 	// If a key is pressed then save that state in the key array.
+	std::cout << input << std::endl;
 	m_keys[input] = true;
 	return;
 }
