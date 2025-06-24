@@ -401,3 +401,36 @@ void ApplicationClass::CheckBrickCollisions()
 		}
 	}
 }
+
+bool ApplicationClass::IsGameOver()
+{
+	if (!m_Circle)
+		return false;
+
+	// Controlla se la palla è uscita dal fondo dello schermo
+	return (m_Circle->GetY() > 600);  // Altezza schermo
+}
+
+void ApplicationClass::ResetGame()
+{
+	// Reset della palla al centro
+	if (m_Circle)
+	{
+		// Potresti aggiungere un metodo Reset alla CircleClass
+		// m_Circle->Reset(400.0f, 300.0f);
+	}
+
+	// Reset di tutti i blocchetti
+	m_remainingBricks = 0;
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			if (m_Bricks[row][col])
+			{
+				m_Bricks[row][col]->SetVisible(true);
+				m_remainingBricks++;
+			}
+		}
+	}
+}

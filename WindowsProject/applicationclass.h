@@ -54,6 +54,11 @@ public:
 
 	void CheckBrickCollisions();
 
+	bool IsGameWon() { return m_remainingBricks <= 0; }
+	bool IsGameOver();  // Controlla se la palla è uscita dal fondo
+	void ResetGame();   // Resetta tutto per una nuova partita
+	int GetRemainingBricks() { return m_remainingBricks; }
+
 private:
 	bool Render();
 
@@ -63,6 +68,7 @@ private:
 	BitmapClass* m_Bitmap;
 	//ModelClass* m_Model;
 	TextureShaderClass* m_TextureShader;
+	int m_remainingBricks;
 	CircleClass* m_Circle;
 
 	static const int BRICK_ROWS = 5;
@@ -72,8 +78,6 @@ private:
 	static const int BRICK_SPACING = 5;
 
 	BrickClass* m_Bricks[BRICK_ROWS][BRICK_COLS];
-	int m_remainingBricks;
-
 };
 
 #endif

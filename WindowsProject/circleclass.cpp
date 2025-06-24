@@ -259,6 +259,18 @@ void CircleClass::UpdateWithCollision(float deltaTime, int screenWidth, int scre
     m_positionY = nextY;
 }
 
+void CircleClass::Reset(float x, float y, float velX, float velY)
+{
+    m_positionX = x;
+    m_positionY = y;
+    m_velocityX = velX;
+    m_velocityY = velY;
+
+    // Force buffer update
+    m_prevPosX = -1;
+    m_prevPosY = -1;
+}
+
 bool CircleClass::InitializeBuffers(ID3D11Device* device)
 {
     VertexType* vertices;

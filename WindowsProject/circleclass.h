@@ -37,6 +37,7 @@ public:
     void UpdateWithCollision(float deltaTime, int screenWidth, int screenHeight,
         int rectX, int rectY, int rectWidth, int rectHeight);
 
+    void Reset(float x, float y, float velX = 150.0f, float velY = -100.0f);
 
     // Getters per posizione e dimensioni
     float GetX() { return m_positionX; }
