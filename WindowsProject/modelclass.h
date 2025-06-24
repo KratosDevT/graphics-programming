@@ -48,10 +48,9 @@ public:
 	ModelClass(const ModelClass&);
 	~ModelClass();
 
-	//bool Initialize(ID3D11Device*);
-	bool Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* textureFilename);
+	bool Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, int screenWidth, int screenHeight, char* textureFilename, int renderX, int renderY);
 	void Shutdown();
-	void Render(ID3D11DeviceContext*);
+	bool Render(ID3D11DeviceContext*);
 
 	int GetIndexCount();
 
@@ -60,9 +59,12 @@ public:
 
 	ID3D11ShaderResourceView* GetTexture();
 
+	void SetRenderLocation(int, int);
+
 private:
 	bool InitializeBuffers(ID3D11Device*);
 	void ShutdownBuffers();
+	bool UpdateBuffers(ID3D11DeviceContext* deviceContent);
 	void RenderBuffers(ID3D11DeviceContext*);
 
 	bool LoadTexture(ID3D11Device*, ID3D11DeviceContext*, char*);
@@ -76,8 +78,8 @@ private:
 	int m_vertexCount;
 	int m_indexCount;
 	int m_instanceCount;
-
-	TextureClass* m_Texture;
+	int m_screenWidth, m_screenHeight, m_bitmapWidth, m_bitmapHeight, m_renderX, m_renderY, m_prevPosX, m_prevPosY;
+	TextureClass* m_texture;
 };
 
 #endif

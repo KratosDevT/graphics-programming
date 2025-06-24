@@ -124,6 +124,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="applicationclass.h" />
+    <ClInclude Include="circleclass.h" />
+    <ClInclude Include="bitmapclass.h" />
     <ClInclude Include="cameraclass.h" />
     <ClInclude Include="colorshaderclass.h" />
     <ClInclude Include="d3dclass.h" />
@@ -135,6 +137,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="applicationclass.cpp" />
+    <ClCompile Include="circleclass.cpp" />
+    <ClCompile Include="bitmapclass.cpp" />
     <ClCompile Include="cameraclass.cpp" />
     <ClCompile Include="colorshaderclass.cpp" />
     <ClCompile Include="d3dclass.cpp" />
@@ -150,6 +154,9 @@
     <None Include="color.vs" />
     <None Include="texture.ps" />
     <None Include="texture.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Cube.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

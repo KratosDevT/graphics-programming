@@ -38,8 +38,8 @@ public:
 
 	bool Initialize(ID3D11Device*, HWND);
 	void Shutdown();
-	//bool Render(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
-	bool Render(ID3D11DeviceContext*, int, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
+	bool Render(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
+	//bool Render(ID3D11DeviceContext*, int, int, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
 
 
 private:
@@ -50,8 +50,8 @@ private:
 	//bool SetShaderParameters(ID3D11DeviceContext*, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
 	bool SetShaderParameters(ID3D11DeviceContext*, XMMATRIX, XMMATRIX, XMMATRIX, ID3D11ShaderResourceView*);
 
-	//void RenderShader(ID3D11DeviceContext*, int);
-	void RenderShader(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount);
+	void RenderShader(ID3D11DeviceContext*, int);
+	//void RenderShader(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount);
 
 private:
 	ID3D11VertexShader* m_vertexShader;

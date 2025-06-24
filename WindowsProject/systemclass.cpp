@@ -5,6 +5,7 @@ SystemClass::SystemClass()
 {
 	m_Input = 0;
 	m_Application = 0;
+	m_deltaTime = 0.0f;
 }
 
 SystemClass::SystemClass(const SystemClass& other)
@@ -27,6 +28,9 @@ bool SystemClass::Initialize()
 
 	// Initialize the windows api.
 	InitializeWindows(screenWidth, screenHeight);
+
+	QueryPerformanceFrequency(&m_frequency);
+	QueryPerformanceCounter(&m_lastTime);
 
 	// Create and initialize the input object.  This object will be used to handle reading the keyboard input from the user.
 	m_Input = new InputClass;
@@ -112,6 +116,25 @@ bool SystemClass::Frame()
 {
 	bool result;
 
+	LARGE_INTEGER currentTime;
+	QueryPerformanceCounter(&currentTime);
+
+	m_deltaTime = (float)(currentTime.QuadPart - m_lastTime.QuadPart) / (float)m_frequency.QuadPart;
+	m_lastTime = currentTime;
+
+	// Cap delta time to prevent large jumps
+	if (m_deltaTime > 0.05f)  // Max 50ms per frame
+	{
+		m_deltaTime = 0.05f;
+	}
+
+	static int currentWidth = 64;   // Dimensione iniziale della bitmap
+	static int currentHeight = 32;  // Dimensione iniziale della bitmap
+	static int posX = 350.0f;             // Posizione X iniziale  
+	static int posY = 550.0f;             // Posizione Y iniziale
+	const int RESIZE_STEP = 2;      // Pixel per step di ridimensionamento
+	const int MOVE_STEP = 10;         // Pixel per step di movimento
+
 
 	// Check if the user pressed escape and wants to exit the application.
 	if (m_Input->IsKeyDown(VK_ESCAPE))
@@ -119,6 +142,49 @@ bool SystemClass::Frame()
 		return false;
 	}
 	
+
+	if (m_Input->IsKeyDown(VK_OEM_PLUS) || m_Input->IsKeyDown(0xBB))
+	{
+		currentWidth += RESIZE_STEP;
+		currentHeight += RESIZE_STEP;
+		m_Application->ResizeBitmap(currentWidth, currentHeight);
+	}
+
+	// Diminuisci dimensioni con '-'
+	if (m_Input->IsKeyDown(VK_OEM_MINUS) || m_Input->IsKeyDown(0xBD))
+	{
+		if (currentWidth > RESIZE_STEP && currentHeight > RESIZE_STEP)
+		{
+			currentWidth -= RESIZE_STEP;
+			currentHeight -= RESIZE_STEP;
+			m_Application->ResizeBitmap(currentWidth, currentHeight);
+		}
+	}
+
+	// Frecce direzionali per muovere la bitmap
+	if (m_Input->IsKeyDown(VK_LEFT))
+	{
+		posX -= MOVE_STEP;
+		m_Application->MoveBitmap(posX, posY);
+	}
+	if (m_Input->IsKeyDown(VK_RIGHT))
+	{
+		posX += MOVE_STEP;
+		m_Application->MoveBitmap(posX, posY);
+	}
+	/*if (m_Input->IsKeyDown(VK_UP))
+	{
+		posY -= MOVE_STEP;
+		m_Application->MoveBitmap(posX, posY);
+	}
+	if (m_Input->IsKeyDown(VK_DOWN))
+	{
+		posY += MOVE_STEP;
+		m_Application->MoveBitmap(posX, posY);
+	}*/
+
+	m_Application->UpdateCircle(m_deltaTime);
+
 
 	// Do the frame processing for the application class object.
 	result = m_Application->Frame();
@@ -290,3 +356,4 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 	}
 	}
 }
+

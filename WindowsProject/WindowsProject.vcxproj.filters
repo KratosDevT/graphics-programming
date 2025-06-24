@@ -42,6 +42,12 @@
     <ClInclude Include="textureclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bitmapclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="circleclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -74,6 +80,12 @@
     <ClCompile Include="textureclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bitmapclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="circleclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="color.vs">
@@ -88,5 +100,10 @@
     <None Include="texture.ps">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Cube.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

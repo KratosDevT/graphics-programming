@@ -48,6 +48,10 @@ private:
 
 	InputClass* m_Input;
 	ApplicationClass* m_Application;
+
+	LARGE_INTEGER m_frequency;
+	LARGE_INTEGER m_lastTime;
+	float m_deltaTime;
 };
 
 /////////////////////////

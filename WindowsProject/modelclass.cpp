@@ -8,7 +8,7 @@ ModelClass::ModelClass()
 	m_vertexBuffer = 0;
 	m_indexBuffer = 0;
 	m_instanceBuffer = 0;
-	m_Texture = 0;
+	m_texture = 0;
 }
 
 
@@ -21,13 +21,20 @@ ModelClass::~ModelClass()
 {
 }
 
-//bool ModelClass::Initialize(ID3D11Device* device)
-bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* textureFilename)
+
+bool ModelClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, int screenWidth, int screenHeight, char* textureFilename, int renderX, int renderY)
 {
 	bool result;
 
+	// Store the screen size.
+	m_screenWidth = screenWidth;
+	m_screenHeight = screenHeight;
 
-	// Initialize the vertex and index buffers.
+	// Store where the bitmap should be rendered to.
+	m_renderX = renderX;
+	m_renderY = renderY;
+
+	// Initialize the vertex and index buffer that hold the geometry for the bitmap quad.
 	result = InitializeBuffers(device);
 	if (!result)
 	{
@@ -55,19 +62,27 @@ void ModelClass::Shutdown()
 	return;
 }
 
-void ModelClass::Render(ID3D11DeviceContext* deviceContext)
+bool ModelClass::Render(ID3D11DeviceContext* deviceContext)
 {
+	bool result;
+
+	// Update the buffers if the position of the bitmap has changed from its original position.
+	result = UpdateBuffers(deviceContext);
+	if (!result)
+	{
+		return false;
+	}
+
 	// Put the vertex and index buffers on the graphics pipeline to prepare them for drawing.
 	RenderBuffers(deviceContext);
 
-	return;
+	return true;
 }
 
 int ModelClass::GetVertexCount()
 {
 	return m_vertexCount;
 }
-
 
 int ModelClass::GetInstanceCount()
 {
@@ -81,21 +96,23 @@ int ModelClass::GetIndexCount()
 
 ID3D11ShaderResourceView* ModelClass::GetTexture()
 {
-	return m_Texture->GetTexture();
+	return m_texture->GetTexture();
 }
 
 bool ModelClass::InitializeBuffers(ID3D11Device* device)
 {
 	VertexType* vertices;
 	unsigned long* indices;
-	D3D11_BUFFER_DESC indexBufferDesc;
-	D3D11_SUBRESOURCE_DATA indexData;
-
 	InstanceType* instances;
-	D3D11_BUFFER_DESC vertexBufferDesc, instanceBufferDesc;
-	D3D11_SUBRESOURCE_DATA vertexData, instanceData;
 
+	D3D11_BUFFER_DESC indexBufferDesc, vertexBufferDesc, instanceBufferDesc;
+	D3D11_SUBRESOURCE_DATA indexData, vertexData, instanceData;
+	float left, right, top, bottom;
 	HRESULT result;
+
+	// Initialize the previous rendering position to negative one.
+	m_prevPosX = -1;
+	m_prevPosY = -1;
 
 	// Set the number of vertices in the vertex array.
 	m_vertexCount = 4;
@@ -119,24 +136,15 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 
 	// Load the vertex array with data.
 	vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // Bottom left.
-	//vertices[0].color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	//vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
+	vertices[0].texture = XMFLOAT2(0.0f, 0.0f);
 
 	vertices[1].position = XMFLOAT3(-1.0f, 0.5f, 0.0f);  // Top left.
-	//vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	//vertices[1].texture = XMFLOAT2(0.0f, 0.0f);
+	vertices[1].texture = XMFLOAT2(0.0f, 1.0f);
 
 	vertices[2].position = XMFLOAT3(1.0f, 0.5f, 0.0f);  // Top right.
-	//vertices[2].color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	//vertices[2].texture = XMFLOAT2(1.0f, 0.0f);
+	vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
 
 	vertices[3].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // Bottom right.
-	//vertices[3].color = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	//vertices[3].texture = XMFLOAT2(1.0f, 1.0f);
-
-	vertices[0].texture = XMFLOAT2(0.0f, 0.0f);
-	vertices[1].texture = XMFLOAT2(0.0f, 1.0f);
-	vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
 	vertices[3].texture = XMFLOAT2(1.0f, 0.0f);
 
 	//// Load the index array with data. clockwise order
@@ -201,18 +209,29 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	// Create the instance array.
 	instances = new InstanceType[m_instanceCount];
 
+	// Calculate the screen coordinates of the right side of the bitmap.
+	right = (float)(m_screenWidth / 2);
+	
+	// Calculate the screen coordinates of the left side of the bitmap.
+	left = right * -1.0f;
+
+	// Calculate the screen coordinates of the top of the bitmap.
+	top = (float)(m_screenHeight / 2);
+
+	// Calculate the screen coordinates of the bottom of the bitmap.
+	bottom = top * -1.0f;
+
 	// Load the instance array with data.
-	instances[0].position = XMFLOAT3(-3.0f, -3.0f, 0.0f);
-	instances[1].position = XMFLOAT3(-3.0f, 3.0f, 0.0f);
-	instances[2].position = XMFLOAT3(3.0f, -3.0f, 0.0f);
-	instances[3].position = XMFLOAT3(3.0f, 3.0f, 0.0f);
-	instances[4].position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	for (size_t i = 0; i < m_instanceCount; i++)
+	{
+		instances[i].position = XMFLOAT3(top, left+i*2, 0.0f);
+	}
 
 	// Set up the description of the instance buffer.
-	instanceBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	instanceBufferDesc.ByteWidth = sizeof(InstanceType) * m_instanceCount;
 	instanceBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	instanceBufferDesc.CPUAccessFlags = 0;
+	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	instanceBufferDesc.MiscFlags = 0;
 	instanceBufferDesc.StructureByteStride = 0;
 
@@ -261,6 +280,11 @@ void ModelClass::ShutdownBuffers()
 	return;
 }
 
+bool ModelClass::UpdateBuffers(ID3D11DeviceContext* deviceContent)
+{
+	return true;
+}
+
 
 void ModelClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
 {
@@ -268,12 +292,7 @@ void ModelClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
 	unsigned int offsets[2];
 	ID3D11Buffer* bufferPointers[2];
 
-
-	// Set vertex buffer stride and offset.
-	//stride = sizeof(VertexType);
-	//offset = 0;
-
-	 // Set the buffer strides.
+	// Set the buffer strides.
 	strides[0] = sizeof(VertexType);
 	strides[1] = sizeof(InstanceType);
 
@@ -306,13 +325,17 @@ bool ModelClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceCo
 
 
 	// Create and initialize the texture object.
-	m_Texture = new TextureClass;
+	m_texture = new TextureClass;
 
-	result = m_Texture->Initialize(device, deviceContext, filename);
+	result = m_texture->Initialize(device, deviceContext, filename);
 	if (!result)
 	{
 		return false;
 	}
+
+	// Store the size in pixels that this bitmap should be rendered at.
+	m_bitmapWidth = m_texture->GetWidth();
+	m_bitmapHeight = m_texture->GetHeight();
 
 	return true;
 }
@@ -320,12 +343,19 @@ bool ModelClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceCo
 void ModelClass::ReleaseTexture()
 {
 	// Release the texture object.
-	if (m_Texture)
+	if (m_texture)
 	{
-		m_Texture->Shutdown();
-		delete m_Texture;
-		m_Texture = 0;
+		m_texture->Shutdown();
+		delete m_texture;
+		m_texture = 0;
 	}
 
+	return;
+}
+
+void ModelClass::SetRenderLocation(int x, int y)
+{
+	m_renderX = x;
+	m_renderY = y;
 	return;
 }

@@ -17,9 +17,10 @@
 ///////////////////////
 #include "d3dclass.h"
 #include "cameraclass.h"
-#include "modelclass.h"
-//#include "colorshaderclass.h"
 #include "textureshaderclass.h"
+#include "bitmapclass.h"
+#include "circleclass.h"
+//#include "modelclass.h"
 
 
 /////////////
@@ -45,16 +46,20 @@ public:
 	void Shutdown();
 	bool Frame();
 
+	void ResizeBitmap(int width, int height);
+	void MoveBitmap(int x, int y);
+	void UpdateCircle(float deltaTime);
+
 private:
 	bool Render();
 
 private:
 	D3DClass* m_Direct3D; //prefix m_ on all class variables.
 	CameraClass* m_Camera;
-	ModelClass* m_Model;
-	//ColorShaderClass* m_ColorShader;
-
+	BitmapClass* m_Bitmap;
+	//ModelClass* m_Model;
 	TextureShaderClass* m_TextureShader;
+	CircleClass* m_Circle;
 
 };
 
