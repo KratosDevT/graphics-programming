@@ -12,6 +12,14 @@ ApplicationClass::ApplicationClass()
 	//m_Model = 0;
 	m_TextureShader = 0;
 	m_Circle = 0;
+	// Initialize brick array to null
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			m_Bricks[row][col] = 0;
+		}
+	}
 }
 
 
@@ -30,6 +38,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	//char textureFilename[128];
 	char bitmapFilename[128];
 	char circleFilename[128];
+	char brickFilename[128];
 	bool result;
 
 	// Create and initialize the Direct3D object.
@@ -63,6 +72,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	//strcpy_s(textureFilename, "bisio_oculus.tga");
 	strcpy_s(bitmapFilename, "stone01.tga");
 	strcpy_s(circleFilename, "circle.tga");
+	strcpy_s(brickFilename, "stone01.tga");
 
 	//// Create and initialize the model object.
 	//m_Model = new ModelClass;
@@ -90,6 +100,36 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if (!result)
 	{
 		return false;
+	}
+
+	int startX = 50;  // Margine sinistro
+	int startY = 50;  // Margine superiore
+
+	m_remainingBricks = 0;
+
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			// Calculate position for this brick
+			int brickX = startX + col * (BRICK_WIDTH + BRICK_SPACING);
+			int brickY = startY + row * (BRICK_HEIGHT + BRICK_SPACING);
+
+			// Create and initialize the brick
+			m_Bricks[row][col] = new BrickClass;
+			result = m_Bricks[row][col]->Initialize(m_Direct3D->GetDevice(),
+				m_Direct3D->GetDeviceContext(),
+				screenWidth, screenHeight,
+				brickFilename,
+				brickX, brickY,
+				BRICK_WIDTH, BRICK_HEIGHT);
+			if (!result)
+			{
+				return false;
+			}
+
+			m_remainingBricks++;
+		}
 	}
 
 	return true;
@@ -128,6 +168,19 @@ void ApplicationClass::Shutdown()
 		m_Bitmap->Shutdown();
 		delete m_Bitmap;
 		m_Bitmap = 0;
+	}
+
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			if (m_Bricks[row][col])
+			{
+				m_Bricks[row][col]->Shutdown();
+				delete m_Bricks[row][col];
+				m_Bricks[row][col] = 0;
+			}
+		}
 	}
 
 	// Release the camera object.
@@ -195,12 +248,34 @@ bool ApplicationClass::Render()
 		return false;
 	}
 
-	
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Bitmap->GetTexture());
-
 	if (!result)
 	{
 		return false;
+	}
+
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			if (m_Bricks[row][col] && m_Bricks[row][col]->IsVisible())
+			{
+				result = m_Bricks[row][col]->Render(m_Direct3D->GetDeviceContext());
+				if (!result)
+				{
+					return false;
+				}
+
+				result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
+					m_Bricks[row][col]->GetIndexCount(),
+					worldMatrix, viewMatrix, orthoMatrix,
+					m_Bricks[row][col]->GetTexture());
+				if (!result)
+				{
+					return false;
+				}
+			}
+		}
 	}
 
 	result = m_Circle->Render(m_Direct3D->GetDeviceContext());
@@ -245,6 +320,8 @@ void ApplicationClass::UpdateCircle(float deltaTime)
 {
 	if (m_Circle && m_Bitmap)
 	{
+		CheckBrickCollisions();
+
 		// Get bitmap position and dimensions
 		int bitmapX = m_Bitmap->GetRenderX();
 		int bitmapY = m_Bitmap->GetRenderY();
@@ -254,5 +331,73 @@ void ApplicationClass::UpdateCircle(float deltaTime)
 		// Update circle with collision detection
 		m_Circle->UpdateWithCollision(deltaTime, 800, 600,
 			bitmapX, bitmapY, bitmapWidth, bitmapHeight);
+	}
+}
+
+void ApplicationClass::CheckBrickCollisions()
+{
+	if (!m_Circle)
+		return;
+
+	float ballX = m_Circle->GetX();
+	float ballY = m_Circle->GetY();
+	float ballRadius = m_Circle->GetRadius();
+
+	for (int row = 0; row < BRICK_ROWS; row++)
+	{
+		for (int col = 0; col < BRICK_COLS; col++)
+		{
+			BrickClass* brick = m_Bricks[row][col];
+
+			if (brick && brick->IsVisible())
+			{
+				// Get brick boundaries
+				float brickLeft = (float)brick->GetX();
+				float brickRight = brickLeft + (float)brick->GetWidth();
+				float brickTop = (float)brick->GetY();
+				float brickBottom = brickTop + (float)brick->GetHeight();
+				
+				// Check collision
+				float closestX = max(brickLeft, min(ballX, brickRight));
+				float closestY = max(brickTop, min(ballY, brickBottom));
+
+				float distanceX = ballX - closestX;
+				float distanceY = ballY - closestY;
+				float distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+				if (distanceSquared < (ballRadius * ballRadius))
+				{
+					// Collision detected! Hide the brick
+					brick->Hide();
+					m_remainingBricks--;
+
+					// Determine collision side and bounce appropriately
+					float ballCenterX = ballX;
+					float ballCenterY = ballY;
+
+					// Calculate distances to each edge
+					float distToLeft = fabs(ballCenterX - brickLeft);
+					float distToRight = fabs(ballCenterX - brickRight);
+					float distToTop = fabs(ballCenterY - brickTop);
+					float distToBottom = fabs(ballCenterY - brickBottom);
+
+					float minDist = min(min(distToLeft, distToRight),
+						min(distToTop, distToBottom));
+
+					if (minDist == distToLeft || minDist == distToRight)
+					{
+						// Hit from left or right side
+						m_Circle->ReverseVelocityX();
+					}
+					else
+					{
+						// Hit from top or bottom
+						m_Circle->ReverseVelocityY();
+					}
+
+					return; // Only handle one collision per frame
+				}
+			}
+		}
 	}
 }

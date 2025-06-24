@@ -48,6 +48,9 @@
     <ClInclude Include="circleclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="brickclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -84,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="circleclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="brickclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

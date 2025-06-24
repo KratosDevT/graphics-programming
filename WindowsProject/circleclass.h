@@ -43,6 +43,14 @@ public:
     float GetY() { return m_positionY; }
     float GetRadius() { return m_radius; }
 
+    // Metodi per controllare le collisioni con i blocchetti
+    void ReverseVelocityX() { m_velocityX = -m_velocityX; }
+    void ReverseVelocityY() { m_velocityY = -m_velocityY; }
+
+    // Getters per velocity (utili per debug)
+    float GetVelocityX() { return m_velocityX; }
+    float GetVelocityY() { return m_velocityY; }
+
 private:
     bool InitializeBuffers(ID3D11Device*);
     void ShutdownBuffers();

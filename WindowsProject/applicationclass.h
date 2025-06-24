@@ -11,6 +11,7 @@
 // INCLUDES //
 //////////////
 //#include <windows.h>
+#include <algorithm>
 
 ///////////////////////
 // MY CLASS INCLUDES //
@@ -20,6 +21,7 @@
 #include "textureshaderclass.h"
 #include "bitmapclass.h"
 #include "circleclass.h"
+#include "brickclass.h"
 //#include "modelclass.h"
 
 
@@ -50,6 +52,8 @@ public:
 	void MoveBitmap(int x, int y);
 	void UpdateCircle(float deltaTime);
 
+	void CheckBrickCollisions();
+
 private:
 	bool Render();
 
@@ -60,6 +64,15 @@ private:
 	//ModelClass* m_Model;
 	TextureShaderClass* m_TextureShader;
 	CircleClass* m_Circle;
+
+	static const int BRICK_ROWS = 5;
+	static const int BRICK_COLS = 10;
+	static const int BRICK_WIDTH = 70;
+	static const int BRICK_HEIGHT = 25;
+	static const int BRICK_SPACING = 5;
+
+	BrickClass* m_Bricks[BRICK_ROWS][BRICK_COLS];
+	int m_remainingBricks;
 
 };
 
