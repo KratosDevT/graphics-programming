@@ -221,10 +221,10 @@ void CircleClass::UpdateWithCollision(float deltaTime, int screenWidth, int scre
             float currentCenterY = m_positionY;
 
             // Calculate distances to each edge
-            float distToLeft = abs(currentCenterX - rectLeft);
-            float distToRight = abs(currentCenterX - rectRight);
-            float distToTop = abs(currentCenterY - rectTop);
-            float distToBottom = abs(currentCenterY - rectBottom);
+            float distToLeft = fabs(currentCenterX - rectLeft);
+            float distToRight = fabs(currentCenterX - rectRight);
+            float distToTop = fabs(currentCenterY - rectTop);
+            float distToBottom = fabs(currentCenterY - rectBottom);
 
             // Find the minimum distance to determine collision side
             float minDist = min(min(distToLeft, distToRight), min(distToTop, distToBottom));

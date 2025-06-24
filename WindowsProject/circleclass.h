@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef _BALLCLASS_H_
-#define _BALLCLASS_H_
+#ifndef _CIRCLECLASS_H_
+#define _CIRCLECLASS_H_
 
 #include <d3d11.h>
 #include <DirectXMath.h>
