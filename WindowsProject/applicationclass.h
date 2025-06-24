@@ -11,7 +11,6 @@
 // INCLUDES //
 //////////////
 //#include <windows.h>
-#include <algorithm>
 
 ///////////////////////
 // MY CLASS INCLUDES //

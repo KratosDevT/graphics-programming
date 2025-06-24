@@ -1,15 +1,15 @@
+#include "applicationclass.h"
 ////////////////////////////////////////////////////////////////////////////////
 // Filename: applicationclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
-#include "applicationclass.h"
 
+#include <cmath>        // Per fabs()
 
 ApplicationClass::ApplicationClass()
 {
 	m_Direct3D = 0;
 	m_Camera = 0;
 	m_Bitmap = 0;
-	//m_Model = 0;
 	m_TextureShader = 0;
 	m_Circle = 0;
 	// Initialize brick array to null
@@ -376,10 +376,10 @@ void ApplicationClass::CheckBrickCollisions()
 					float ballCenterY = ballY;
 
 					// Calculate distances to each edge
-					float distToLeft = fabs(ballCenterX - brickLeft);
-					float distToRight = fabs(ballCenterX - brickRight);
-					float distToTop = fabs(ballCenterY - brickTop);
-					float distToBottom = fabs(ballCenterY - brickBottom);
+					float distToLeft = std::fabs(ballCenterX - brickLeft);
+					float distToRight = std::fabs(ballCenterX - brickRight);
+					float distToTop = std::fabs(ballCenterY - brickTop);
+					float distToBottom = std::fabs(ballCenterY - brickBottom);
 
 					float minDist = min(min(distToLeft, distToRight),
 						min(distToTop, distToBottom));
