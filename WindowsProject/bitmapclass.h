@@ -51,6 +51,9 @@ public:
     int GetRenderX() { return m_renderX; }
     int GetRenderY() { return m_renderY; }
 
+    void MoveToLeft(float deltaTime);
+	void MoveToRight(float deltaTime);
+
 private:
     bool InitializeBuffers(ID3D11Device*);
     void ShutdownBuffers();
@@ -66,6 +69,7 @@ private:
         m_bitmapWidth, m_bitmapHeight, m_renderX, m_renderY, m_prevPosX, m_prevPosY;
     TextureClass* m_Texture;          
     float m_offsetPaddlePosition;
+    float m_paddleVelocity;
 };
 
 #endif

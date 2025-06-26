@@ -88,44 +88,6 @@ bool CircleClass::Render(ID3D11DeviceContext* deviceContext)
     return true;
 }
 
-void CircleClass::Update(float deltaTime, int screenWidth, int screenHeight)
-{
-    // Update screen dimensions
-    m_screenWidth = screenWidth;
-    m_screenHeight = screenHeight;
-
-    // Update position
-    m_positionX += m_velocityX * deltaTime;
-    m_positionY += m_velocityY * deltaTime;
-
-    // Check for collision with screen boundaries and bounce
-    // Left wall
-    if (m_positionX - m_radius <= 0)
-    {
-        m_positionX = m_radius;
-        m_velocityX = -m_velocityX;  // Reverse X velocity
-    }
-    // Right wall
-    else if (m_positionX + m_radius >= m_screenWidth)
-    {
-        m_positionX = m_screenWidth - m_radius;
-        m_velocityX = -m_velocityX;  // Reverse X velocity
-    }
-
-    // Top wall
-    if (m_positionY - m_radius <= 0)
-    {
-        m_positionY = m_radius;
-        m_velocityY = -m_velocityY;  // Reverse Y velocity
-    }
-    // Bottom wall
-    else if (m_positionY + m_radius >= m_screenHeight)
-    {
-        m_positionY = m_screenHeight - m_radius;
-        m_velocityY = -m_velocityY;  // Reverse Y velocity
-    }
-}
-
 int CircleClass::GetIndexCount()
 {
     return m_indexCount;
@@ -220,44 +182,6 @@ void CircleClass::BounceFromPaddle(float& rectLeft, float& rectRight)
     sprintf_s(debugMsg, "Paddle bounce: hitOffset=%.2f, newVel=(%.1f,%.1f)\n",
         hitOffset, m_velocityX, m_velocityY);
     OutputDebugStringA(debugMsg);
-}
-
-void CircleClass::OldBounceStrategy(float rectLeft, float rectRight, float rectTop, float rectBottom, float& nextX, float& nextY)
-{
-    float currentCenterX = m_positionX;
-    float currentCenterY = m_positionY;
-
-    // Calculate distances to each edge
-    float distToLeft = fabs(currentCenterX - rectLeft);
-    float distToRight = fabs(currentCenterX - rectRight);
-    float distToTop = fabs(currentCenterY - rectTop);
-    float distToBottom = fabs(currentCenterY - rectBottom);
-
-    // Find the minimum distance to determine collision side
-    float minDist = min(min(distToLeft, distToRight), min(distToTop, distToBottom));
-
-    if (minDist == distToLeft || minDist == distToRight)
-    {
-        // Hit left or right side - reverse X velocity
-        m_velocityX = -m_velocityX;
-
-        // Position ball outside the rectangle
-        if (minDist == distToLeft)
-            nextX = rectLeft - m_radius - 1;
-        else
-            nextX = rectRight + m_radius + 1;
-    }
-    else
-    {
-        // Hit top or bottom side - reverse Y velocity
-        m_velocityY = -m_velocityY;
-
-        // Position ball outside the rectangle
-        if (minDist == distToTop)
-            nextY = rectTop - m_radius - 1;
-        else
-            nextY = rectBottom + m_radius + 1;
-    }
 }
 
 bool CircleClass::CheckCollisionWithScreenBoundary(float& nextX, float& nextY, int screenWidth)

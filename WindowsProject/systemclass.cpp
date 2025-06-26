@@ -122,13 +122,12 @@ bool SystemClass::Frame()
 	m_deltaTime = (float)(currentTime.QuadPart - m_lastTime.QuadPart) / (float)m_frequency.QuadPart;
 	m_lastTime = currentTime;
 
-	// Cap delta time to prevent large jumps
-	if (m_deltaTime > 0.05f)  // Max 50ms per frame
+	// nel caso di un frame troppo lungo, lo cappo a 50ms. come drawback, se succede, il gioco rallenta (ma almeno le collisioni le becca)
+	if (m_deltaTime > 0.05f) 
 	{
 		m_deltaTime = 0.05f;
 	}
 
-	// Check if the user pressed escape and wants to exit the application.
 	if (m_Input->IsKeyDown(VK_ESCAPE))
 	{
 		return false;
@@ -162,31 +161,21 @@ bool SystemClass::Frame()
 
 	if (m_Input->IsKeyDown(VK_LEFT))
 	{
-		m_Application->MovePaddleLeft();
+		m_Application->MovePaddleLeft(m_deltaTime);
 	}
 
 	if (m_Input->IsKeyDown(VK_RIGHT))
 	{
-		m_Application->MovePaddleRight();
+		m_Application->MovePaddleRight(m_deltaTime);
 	}
 
-	m_Application->UpdateBall(m_deltaTime);
+	//step fisico
+	m_Application->Update(m_deltaTime);
 
-	if (m_Application->IsGameOver())
-	{
-		char gameOverMsg[256];
-		sprintf_s(gameOverMsg, "GAME OVER! Brick rimanenti: %d. Premi R per ricominciare.\n",
-			m_Application->GetRemainingBricks());
-
-		OutputDebugStringA(gameOverMsg);
-
-		m_Application->ResetGame();
-	}
-
-	// STAMPA COUNTER BRICK (ogni 60 frame circa)
+	// non implementato ancora a schermo
 	static int frameCounter = 0;
 	frameCounter++;
-	if (frameCounter >= 60)  // Ogni secondo circa
+	if (frameCounter >= 120)  // Ogni 2 secondi circa
 	{
 		char counterMsg[128];
 		sprintf_s(counterMsg, "Brick rimanenti: %d\n", m_Application->GetRemainingBricks());
@@ -287,9 +276,9 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	}
 	else
 	{
-		// If windowed then set it to 800x600 resolution.
-		screenWidth = 800;
-		screenHeight = 600;
+		// If windowed then set it to SCREEN_WINDOW_WIDTHxSCREEN_WINDOW_HEIGHT resolution.
+		screenWidth = SCREEN_WINDOW_WIDTH;
+		screenHeight = SCREEN_WINDOW_HEIGHT;
 
 		// Place the window in the middle of the screen.
 		posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth) / 2;

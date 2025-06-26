@@ -68,7 +68,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	char paddleTextureFilename[128];
 	strcpy_s(paddleTextureFilename, "paddle.tga");
 	m_Bitmap = new BitmapClass;
-	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, paddleTextureFilename, 350, 550);
+	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, paddleTextureFilename, screenWidth * 0.4f, screenHeight * 0.85f);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Bitmap object.", L"Error", MB_OK);
@@ -78,11 +78,8 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	char circleFilename[128];
 	strcpy_s(circleFilename, "circle.tga");
 	m_Circle = new CircleClass;
-	
-	float paddleX = 600.0f;  
-	float paddleY = 450.0f;
-	float ballStartX = (float)paddleX + m_Bitmap->GetWidth()/2;
-	float ballStartY = (float)paddleY - m_ballOffsetFromPaddle;
+	float ballStartX = (float)m_Bitmap->GetRenderX() + m_Bitmap->GetWidth() / 2;
+	float ballStartY = (float)m_Bitmap->GetRenderY() - m_ballOffsetFromPaddle;
 
 	result = m_Circle->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),
 		screenWidth, screenHeight, circleFilename,
@@ -163,7 +160,7 @@ void ApplicationClass::LaunchBall()
 
 	// Imposta velocità di lancio
 	float launchVelX = 100.0f;   // Velocità orizzontale
-	float launchVelY = -400.0f;  // Velocità verticale (verso l'alto)
+	float launchVelY = -450.0f;  // Velocità verticale (verso l'alto)
 
 
 	// randomizza leggermente la direzione
@@ -330,7 +327,6 @@ bool ApplicationClass::Frame()
 {
 	bool result;
 
-	// Render the graphics scene.
 	result = Render();
 	if (!result)
 	{
@@ -343,7 +339,6 @@ bool ApplicationClass::Render()
 {
 	XMMATRIX worldMatrix, viewMatrix, orthoMatrix;
 	bool result;
-
 
 	// Clear the buffers to begin the scene. black
 	m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
@@ -364,7 +359,6 @@ bool ApplicationClass::Render()
 	{
 		return false;
 	}
-
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Bitmap->GetTexture());
 	if (!result)
 	{
@@ -459,42 +453,50 @@ bool ApplicationClass::Render()
 	return true;
 }
 
-void ApplicationClass::UpdateBall(float deltaTime)
+void ApplicationClass::UpdateBallAttachedToPaddle()
+{
+
+	int paddleX = m_Bitmap->GetRenderX();
+	int paddleY = m_Bitmap->GetRenderY();
+	int paddleWidth = m_Bitmap->GetWidth();
+
+	float ballX = (float)paddleX + (float)paddleWidth / 2.0f;
+	float ballY = (float)paddleY - m_ballOffsetFromPaddle;
+
+	m_Circle->Reset(ballX, ballY, 0.0f, 0.0f);
+}
+
+void ApplicationClass::UpdateBallInMotion(float deltaTime) 
+{
+
+	int bitmapX = m_Bitmap->GetRenderX();
+	int bitmapY = m_Bitmap->GetRenderY();
+	int bitmapWidth = m_Bitmap->GetWidth();
+	int bitmapHeight = m_Bitmap->GetHeight();
+
+	// Aggiorna posizione e velocità in base alle collisioni con bordi e paddle
+	m_Circle->UpdateWithCollision(deltaTime, SCREEN_WINDOW_WIDTH, SCREEN_WINDOW_HEIGHT,
+		bitmapX, bitmapY, bitmapWidth, bitmapHeight);
+
+	// verifica collisione con i bricks
+	CheckCollisionsBallWithBricks();
+
+	CheckGameWon();
+	CheckGameOver();
+}
+
+void ApplicationClass::Update(float deltaTime)
 {
 	if (!m_Circle || !m_Bitmap)
 		return;
 
 	if (m_ballAttachedToPaddle)
 	{
-		int paddleX = m_Bitmap->GetRenderX();
-		int paddleY = m_Bitmap->GetRenderY();
-		int paddleWidth = m_Bitmap->GetWidth();
-
-		float ballX = (float)paddleX + (float)paddleWidth / 2.0f;
-		float ballY = (float)paddleY - m_ballOffsetFromPaddle;
-
-		m_Circle->Reset(ballX, ballY, 0.0f, 0.0f);
+		UpdateBallAttachedToPaddle();
 	}
 	else
 	{
-		CheckCollisionsBallWithBricks();
-		
-		int bitmapX = m_Bitmap->GetRenderX();
-		int bitmapY = m_Bitmap->GetRenderY();
-		int bitmapWidth = m_Bitmap->GetWidth();
-		int bitmapHeight = m_Bitmap->GetHeight();
-
-		m_Circle->UpdateWithCollision(deltaTime, 800, 600,
-			bitmapX, bitmapY, bitmapWidth, bitmapHeight);
-
-		CheckGameWon();
-		if (m_Circle->GetY() > 600)
-		{
-			char statusMsg[256];
-			sprintf_s(statusMsg, "GAME OVER, Palla uscita! Brick rimanenti: %d\n", m_remainingBricks);
-			OutputDebugStringA(statusMsg);
-			ResetGame();
-		}
+		UpdateBallInMotion(deltaTime);
 	}
 }
 
@@ -601,13 +603,7 @@ void ApplicationClass::CheckCollisionsBallWithBricks()
 	}
 }
 
-bool ApplicationClass::IsGameOver()
-{
-	if (!m_Circle)
-		return false;
 
-	return (m_gameStarted && !m_ballAttachedToPaddle && m_Circle->GetY() > 600);
-}
 
 void ApplicationClass::CheckGameWon()
 {
@@ -617,6 +613,17 @@ void ApplicationClass::CheckGameWon()
 		// Prima volta che vince - imposta lo stato
 		m_gameWon = true;
 		OutputDebugStringA("VITTORIA! Tutti i brick sono stati distrutti!\n");
+	}
+}
+
+void ApplicationClass::CheckGameOver() 
+{
+	if (m_gameStarted && !m_ballAttachedToPaddle && m_Circle->GetY() > SCREEN_WINDOW_HEIGHT)
+	{
+		char statusMsg[256];
+		sprintf_s(statusMsg, "GAME OVER, Palla uscita! Brick rimanenti: %d\n", m_remainingBricks);
+		OutputDebugStringA(statusMsg);
+		ResetGame();
 	}
 }
 
@@ -647,31 +654,18 @@ void ApplicationClass::ResetGame()
 	OutputDebugStringA("Gioco resettato - premi SPAZIO per iniziare\n");
 }
 
-void ApplicationClass::MovePaddleLeft()
+void ApplicationClass::MovePaddleLeft(float deltaTime)
 {
 	if (!m_Bitmap) return;
 
-	int currentX = m_Bitmap->GetRenderX();
-	int newX = currentX - 10;  
-
-	if (newX >= 0)
-	{
-		m_Bitmap->SetRenderLocation(newX, m_Bitmap->GetRenderY());
-	}
+	m_Bitmap->MoveToLeft(deltaTime);
 }
 
-void ApplicationClass::MovePaddleRight()
+void ApplicationClass::MovePaddleRight(float deltaTime)
 {
 	if (!m_Bitmap) return;
 
-	int currentX = m_Bitmap->GetRenderX();
-	int currentWidth = m_Bitmap->GetWidth();
-	int newX = currentX + 10;
-
-	if (newX + currentWidth <= 800)  
-	{
-		m_Bitmap->SetRenderLocation(newX, m_Bitmap->GetRenderY());
-	}
+	m_Bitmap->MoveToRight(deltaTime);
 }
 
 void ApplicationClass::UpdateFontVisibility()

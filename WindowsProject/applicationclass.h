@@ -30,6 +30,8 @@
 // GLOBALS //
 /////////////
 const bool FULL_SCREEN = false;
+const int SCREEN_WINDOW_WIDTH = 800;
+const int SCREEN_WINDOW_HEIGHT = 600;
 const bool VSYNC_ENABLED = true;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.3f;
@@ -48,13 +50,15 @@ public:
 
 	bool Initialize(int, int, HWND);
 	bool InitializeBlocksGrid(int screenWidth, int screenHeight, char  brickFilename[128], int distanceFromTop);
-	void Shutdown();
+
+	void Update(float deltaTime);
 	bool Frame();
 
-	void MovePaddleLeft();
-	void MovePaddleRight();
+	void Shutdown();
 
-	void UpdateBall(float deltaTime);
+	void MovePaddleLeft(float deltaTime);
+	void MovePaddleRight(float deltaTime);
+
 	void LaunchBall();
 	void AttachBallToPaddle();
 	bool IsBallAttached() { return m_ballAttachedToPaddle; }
@@ -62,8 +66,6 @@ public:
 	void CheckCollisionsBallWithBricks();
 	int GetRemainingBricks();
 
-	void CheckGameWon();
-	bool IsGameOver();
 	bool IsGameWon() { return m_gameWon; }
 	void ResetGame();
 
@@ -71,6 +73,10 @@ public:
 
 private:
 	bool Render();
+	void UpdateBallAttachedToPaddle();
+	void UpdateBallInMotion(float deltaTime);
+	void CheckGameWon();
+	void CheckGameOver();
 
 private:
 	//prefix m_ on all class variables.

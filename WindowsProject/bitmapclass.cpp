@@ -17,6 +17,8 @@ BitmapClass::BitmapClass()
     m_renderY = 0;
     m_prevPosX = -1;
 	m_prevPosY = -1;
+
+    m_paddleVelocity = 500.0f;
 }
 
 
@@ -354,4 +356,24 @@ int BitmapClass::GetWidth()
 int BitmapClass::GetHeight()
 {
     return m_bitmapHeight;
+}
+
+void BitmapClass::MoveToLeft(float deltaTime)
+{
+    int newX = m_renderX - (m_paddleVelocity * deltaTime);
+
+    if (newX >= 0)
+    {
+       SetRenderLocation(newX, m_renderY);
+    }
+}
+
+void BitmapClass::MoveToRight(float deltaTime)
+{
+    int newX = m_renderX + (m_paddleVelocity * deltaTime);
+
+    if (newX + m_bitmapWidth <= m_screenWidth)
+    {
+        SetRenderLocation(newX, m_renderY);
+    }
 }

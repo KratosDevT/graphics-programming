@@ -27,21 +27,18 @@ public:
     ~CircleClass();
 
     bool Initialize(ID3D11Device*, ID3D11DeviceContext*, int, int, char*, float, float, float, float ,float);
-    void Shutdown();
-    bool Render(ID3D11DeviceContext*);
-    void Update(float deltaTime, int screenWidth, int screenHeight);
 
-    int GetIndexCount();
-    ID3D11ShaderResourceView* GetTexture();
-
-    void UpdateWithCollision(float deltaTime, int screenWidth, int screenHeight,
-        int rectX, int rectY, int rectWidth, int rectHeight);
-
-    void OldBounceStrategy(float rectLeft, float rectRight, float rectTop, float rectBottom, float& nextX, float& nextY);
+    void UpdateWithCollision(float deltaTime, int screenWidth, int screenHeight, int rectX, int rectY, int rectWidth, int rectHeight);
     void BounceFromPaddle(float& nextX, float& nextY);
     bool CheckCollisionWithScreenBoundary(float& nextX, float& nextY, int screenWidth);
 
+    bool Render(ID3D11DeviceContext*);
+
     void Reset(float x, float y, float velX = 150.0f, float velY = -100.0f);
+    void Shutdown();
+
+    int GetIndexCount();
+    ID3D11ShaderResourceView* GetTexture();
 
     float GetX() { return m_positionX; }
     float GetY() { return m_positionY; }
@@ -58,12 +55,9 @@ private:
     void ShutdownBuffers();
     bool UpdateBuffers(ID3D11DeviceContext*);
     void RenderBuffers(ID3D11DeviceContext*);
-
     bool LoadTexture(ID3D11Device*, ID3D11DeviceContext*, char*);
     void ReleaseTexture();
-    bool CheckCircleRectCollision(float circleX, float circleY, float radius,
-        float rectLeft, float rectTop, float rectRight, float rectBottom);
-
+    bool CheckCircleRectCollision(float circleX, float circleY, float radius, float rectLeft, float rectTop, float rectRight, float rectBottom);
 
 private:
     ID3D11Buffer* m_vertexBuffer, * m_indexBuffer;
@@ -75,8 +69,6 @@ private:
     float m_velocityX, m_velocityY;    // Velocità di movimento
     float m_radius;                    // Raggio del cerchio
     int m_screenWidth, m_screenHeight; // Dimensioni dello schermo
-
-    // Variabili per l'aggiornamento del buffer
     int m_prevPosX, m_prevPosY;
 };
 
