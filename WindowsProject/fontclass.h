@@ -1,29 +1,18 @@
 #pragma once
 
-////////////////////////////////////////////////////////////////////////////////
-// Filename: bitmapclass.h
-////////////////////////////////////////////////////////////////////////////////
-#ifndef _BITMAPCLASS_H_
-#define _BITMAPCLASS_H_
+#ifndef _FONTCLASS_H_
+#define _FONTCLASS_H_
 
-
-//////////////
-// INCLUDES //
-//////////////
+#include <d3d11.h>
 #include <directxmath.h>
 using namespace DirectX;
 
-
-///////////////////////
-// MY CLASS INCLUDES //
-///////////////////////
 #include "textureclass.h"
 
-
 ////////////////////////////////////////////////////////////////////////////////
-// Class name: BitmapClass
+// Class name: FontClass
 ////////////////////////////////////////////////////////////////////////////////
-class BitmapClass
+class FontClass
 {
 private:
     struct VertexType
@@ -33,9 +22,9 @@ private:
     };
 
 public:
-    BitmapClass();
-    BitmapClass(const BitmapClass&);
-    ~BitmapClass();
+    FontClass();
+    FontClass(const FontClass&);
+    ~FontClass();
 
     bool Initialize(ID3D11Device*, ID3D11DeviceContext*, int, int, char*, int, int);
     void Shutdown();
@@ -44,12 +33,14 @@ public:
     int GetIndexCount();
     ID3D11ShaderResourceView* GetTexture();
 
-    void SetRenderLocation(int, int);
-
-    int GetWidth();
-    int GetHeight();
+    // Getters per posizione e dimensioni
     int GetRenderX() { return m_renderX; }
     int GetRenderY() { return m_renderY; }
+    int GetWidth() { return m_fontWidth; }
+    int GetHeight() { return m_fontHeight; }
+
+    // Setters per posizione
+    void SetRenderLocation(int x, int y);
 
 private:
     bool InitializeBuffers(ID3D11Device*);
@@ -62,10 +53,12 @@ private:
 
 private:
     ID3D11Buffer* m_vertexBuffer, * m_indexBuffer;
-    int m_vertexCount, m_indexCount, m_screenWidth, m_screenHeight,
-        m_bitmapWidth, m_bitmapHeight, m_renderX, m_renderY, m_prevPosX, m_prevPosY;
-    TextureClass* m_Texture;          
-    float m_offsetPaddlePosition;
+    int m_vertexCount, m_indexCount;
+    int m_screenWidth, m_screenHeight;
+    int m_fontWidth, m_fontHeight;
+    int m_renderX, m_renderY;
+    int m_prevPosX, m_prevPosY;
+    TextureClass* m_Texture;
 };
 
 #endif

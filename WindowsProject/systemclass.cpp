@@ -128,71 +128,77 @@ bool SystemClass::Frame()
 		m_deltaTime = 0.05f;
 	}
 
-	static int currentWidth = 64;   // Dimensione iniziale della bitmap
-	static int currentHeight = 32;  // Dimensione iniziale della bitmap
-	static int posX = 350.0f;             // Posizione X iniziale  
-	static int posY = 550.0f;             // Posizione Y iniziale
-	const int RESIZE_STEP = 2;      // Pixel per step di ridimensionamento
-	const int MOVE_STEP = 10;         // Pixel per step di movimento
-
-
 	// Check if the user pressed escape and wants to exit the application.
 	if (m_Input->IsKeyDown(VK_ESCAPE))
 	{
 		return false;
 	}
-	
 
-	if (m_Input->IsKeyDown(VK_OEM_PLUS) || m_Input->IsKeyDown(0xBB))
+	if (m_Application->IsGameWon())
 	{
-		currentWidth += RESIZE_STEP;
-		currentHeight += RESIZE_STEP;
-		m_Application->ResizeBitmap(currentWidth, currentHeight);
+		OutputDebugStringA("CONGRATULAZIONI! Hai vinto! Premi R per giocare di nuovo.\n");
+
+		if (m_Input->IsKeyDown('R'))
+		{
+			m_Application->ResetGame();
+		}
+
+		// Non processare altri input durante la vittoria
+		result = m_Application->Frame();
+		if (!result)
+		{
+			return false;
+		}
+		return true;
 	}
 
-	// Diminuisci dimensioni con '-'
-	if (m_Input->IsKeyDown(VK_OEM_MINUS) || m_Input->IsKeyDown(0xBD))
+	if (m_Input->IsKeyDown(VK_SPACE))
 	{
-		if (currentWidth > RESIZE_STEP && currentHeight > RESIZE_STEP)
+		if (m_Application->IsBallAttached())
 		{
-			currentWidth -= RESIZE_STEP;
-			currentHeight -= RESIZE_STEP;
-			m_Application->ResizeBitmap(currentWidth, currentHeight);
+			m_Application->LaunchBall();
 		}
 	}
 
-	// Frecce direzionali per muovere la bitmap
 	if (m_Input->IsKeyDown(VK_LEFT))
 	{
-		posX -= MOVE_STEP;
-		m_Application->MoveBitmap(posX, posY);
+		m_Application->MovePaddleLeft();
 	}
+
 	if (m_Input->IsKeyDown(VK_RIGHT))
 	{
-		posX += MOVE_STEP;
-		m_Application->MoveBitmap(posX, posY);
+		m_Application->MovePaddleRight();
 	}
-	/*if (m_Input->IsKeyDown(VK_UP))
+
+	m_Application->UpdateBall(m_deltaTime);
+
+	if (m_Application->IsGameOver())
 	{
-		posY -= MOVE_STEP;
-		m_Application->MoveBitmap(posX, posY);
+		char gameOverMsg[256];
+		sprintf_s(gameOverMsg, "GAME OVER! Brick rimanenti: %d. Premi R per ricominciare.\n",
+			m_Application->GetRemainingBricks());
+
+		OutputDebugStringA(gameOverMsg);
+
+		m_Application->ResetGame();
 	}
-	if (m_Input->IsKeyDown(VK_DOWN))
+
+	// STAMPA COUNTER BRICK (ogni 60 frame circa)
+	static int frameCounter = 0;
+	frameCounter++;
+	if (frameCounter >= 60)  // Ogni secondo circa
 	{
-		posY += MOVE_STEP;
-		m_Application->MoveBitmap(posX, posY);
-	}*/
+		char counterMsg[128];
+		sprintf_s(counterMsg, "Brick rimanenti: %d\n", m_Application->GetRemainingBricks());
+		OutputDebugStringA(counterMsg);
+		frameCounter = 0;
+	}
 
-	m_Application->UpdateCircle(m_deltaTime);
-
-
-	// Do the frame processing for the application class object.
-	result = m_Application->Frame();
+	result = m_Application->Frame(); // Process the frame for the application object.
 	if (!result)
 	{
 		return false;
 	}
-
 	return true;
 }
 

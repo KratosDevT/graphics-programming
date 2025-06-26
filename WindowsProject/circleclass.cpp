@@ -32,31 +32,25 @@ CircleClass::~CircleClass()
 
 bool CircleClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext,
     int screenWidth, int screenHeight, char* textureFilename,
-    float startX, float startY, float radius)
+    float startX, float startY, float radius, float velocityX, float velocityY)
 {
     bool result;
 
-    // Store screen dimensions
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    // Set initial position and properties
     m_positionX = startX;
     m_positionY = startY;
     m_radius = radius;
 
-    // Set initial velocity (puoi modificare questi valori)
-    m_velocityX = 150.0f;  // pixel al secondo
-    m_velocityY = 100.0f;  // pixel al secondo
+    m_velocityX = velocityX;  
+    m_velocityY = velocityY;  
 
-    // Initialize the vertex and index buffers
     result = InitializeBuffers(device);
     if (!result)
     {
         return false;
     }
-
-    // Load the texture for this circle
     result = LoadTexture(device, deviceContext, textureFilename);
     if (!result)
     {
@@ -162,44 +156,15 @@ bool CircleClass::CheckCircleRectCollision(float circleX, float circleY, float r
 void CircleClass::UpdateWithCollision(float deltaTime, int screenWidth, int screenHeight,
     int rectX, int rectY, int rectWidth, int rectHeight)
 {
-    // Update screen dimensions
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    // Calculate next position
     float nextX = m_positionX + m_velocityX * deltaTime;
     float nextY = m_positionY + m_velocityY * deltaTime;
 
-    // Check collision with screen boundaries first
-    bool hitScreenBoundary = false;
-
-    // Left/Right screen boundaries
-    if (nextX - m_radius <= 0)
-    {
-        nextX = m_radius;
-        m_velocityX = -m_velocityX;
-        hitScreenBoundary = true;
-    }
-    else if (nextX + m_radius >= screenWidth)
-    {
-        nextX = screenWidth - m_radius;
-        m_velocityX = -m_velocityX;
-        hitScreenBoundary = true;
-    }
-
-    // Top/Bottom screen boundaries
-    if (nextY - m_radius <= 0)
-    {
-        nextY = m_radius;
-        m_velocityY = -m_velocityY;
-        hitScreenBoundary = true;
-    }
-    else if (nextY + m_radius >= screenHeight)
-    {
-        nextY = screenHeight - m_radius;
-        m_velocityY = -m_velocityY;
-        hitScreenBoundary = true;
-    }
+	// Check for collision with screen boundaries
+    bool hitScreenBoundary = CheckCollisionWithScreenBoundary(nextX, nextY, screenWidth);
+    
 
     // Check collision with rectangle (bitmap) only if not hitting screen boundary
     if (!hitScreenBoundary)
@@ -210,53 +175,114 @@ void CircleClass::UpdateWithCollision(float deltaTime, int screenWidth, int scre
         float rectTop = (float)rectY;
         float rectBottom = (float)(rectY + rectHeight);
 
-        // Check if circle will intersect with rectangle
-        bool willCollide = CheckCircleRectCollision(nextX, nextY, m_radius,
+        // Check if circle will intersect with paddle
+        bool paddleCollision = CheckCircleRectCollision(nextX, nextY, m_radius,
             rectLeft, rectTop, rectRight, rectBottom);
 
-        if (willCollide)
+        if (paddleCollision)
         {
-            // Determine which side of the rectangle was hit
-            float currentCenterX = m_positionX;
-            float currentCenterY = m_positionY;
-
-            // Calculate distances to each edge
-            float distToLeft = fabs(currentCenterX - rectLeft);
-            float distToRight = fabs(currentCenterX - rectRight);
-            float distToTop = fabs(currentCenterY - rectTop);
-            float distToBottom = fabs(currentCenterY - rectBottom);
-
-            // Find the minimum distance to determine collision side
-            float minDist = min(min(distToLeft, distToRight), min(distToTop, distToBottom));
-
-            if (minDist == distToLeft || minDist == distToRight)
-            {
-                // Hit left or right side - reverse X velocity
-                m_velocityX = -m_velocityX;
-
-                // Position ball outside the rectangle
-                if (minDist == distToLeft)
-                    nextX = rectLeft - m_radius - 1;
-                else
-                    nextX = rectRight + m_radius + 1;
-            }
-            else
-            {
-                // Hit top or bottom side - reverse Y velocity
-                m_velocityY = -m_velocityY;
-
-                // Position ball outside the rectangle
-                if (minDist == distToTop)
-                    nextY = rectTop - m_radius - 1;
-                else
-                    nextY = rectBottom + m_radius + 1;
-            }
+            BounceFromPaddle(rectLeft, rectRight);
+            //OldBounceStrategy(rectLeft, rectRight, rectTop, rectBottom, nextX, nextY);
         }
     }
 
     // Update position
     m_positionX = nextX;
     m_positionY = nextY;
+}
+
+void CircleClass::BounceFromPaddle(float& rectLeft, float& rectRight) 
+{    
+    // Calcola il centro del paddle
+    float paddleWidth = (rectRight - rectLeft) / 2.0f;
+	float paddleCenterX = rectLeft + paddleWidth;
+
+    // Calcola dove ha colpito rispetto al centro del paddle
+    float hitOffset = (m_positionX - paddleCenterX) / (paddleWidth / 2.0f);
+
+    // valore tra -1 e +1 per sicurezza
+    hitOffset = max(-1.0f, min(1.0f, hitOffset));
+    
+    // velocità Y sempre verso l'alto
+    float newVelocityY = -abs(m_velocityY);
+
+    // velocità X basata sulla posizione di impatto sul paddle
+    // Più lontano dal centro = più velocità orizzontale
+	float maxHorizontalSpeed = abs(m_velocityY) * 0.8f; // 80% della velocità verticale, così langolo di rimbalzo è meno di 45 gradi
+
+    // se colpisce a sx va a sinistra, se a dx va a destra, si basa sul segno di hitOffset
+    float newVelocityX = hitOffset * maxHorizontalSpeed;
+
+    m_velocityX = newVelocityX;
+    m_velocityY = newVelocityY;
+
+    char debugMsg[256];
+    sprintf_s(debugMsg, "Paddle bounce: hitOffset=%.2f, newVel=(%.1f,%.1f)\n",
+        hitOffset, m_velocityX, m_velocityY);
+    OutputDebugStringA(debugMsg);
+}
+
+void CircleClass::OldBounceStrategy(float rectLeft, float rectRight, float rectTop, float rectBottom, float& nextX, float& nextY)
+{
+    float currentCenterX = m_positionX;
+    float currentCenterY = m_positionY;
+
+    // Calculate distances to each edge
+    float distToLeft = fabs(currentCenterX - rectLeft);
+    float distToRight = fabs(currentCenterX - rectRight);
+    float distToTop = fabs(currentCenterY - rectTop);
+    float distToBottom = fabs(currentCenterY - rectBottom);
+
+    // Find the minimum distance to determine collision side
+    float minDist = min(min(distToLeft, distToRight), min(distToTop, distToBottom));
+
+    if (minDist == distToLeft || minDist == distToRight)
+    {
+        // Hit left or right side - reverse X velocity
+        m_velocityX = -m_velocityX;
+
+        // Position ball outside the rectangle
+        if (minDist == distToLeft)
+            nextX = rectLeft - m_radius - 1;
+        else
+            nextX = rectRight + m_radius + 1;
+    }
+    else
+    {
+        // Hit top or bottom side - reverse Y velocity
+        m_velocityY = -m_velocityY;
+
+        // Position ball outside the rectangle
+        if (minDist == distToTop)
+            nextY = rectTop - m_radius - 1;
+        else
+            nextY = rectBottom + m_radius + 1;
+    }
+}
+
+bool CircleClass::CheckCollisionWithScreenBoundary(float& nextX, float& nextY, int screenWidth)
+{
+    if (nextX - m_radius <= 0) // Left screen boundary
+    {
+        nextX = m_radius;
+        m_velocityX = -m_velocityX;
+        return true;
+    }
+    else if (nextX + m_radius >= screenWidth) // Right screen boundary
+    {
+        nextX = screenWidth - m_radius;
+        m_velocityX = -m_velocityX;
+        return true;
+    }
+
+    if (nextY - m_radius <= 0) // Top screen boundary
+    {
+        nextY = m_radius;
+        m_velocityY = -m_velocityY;
+        return true;
+    }
+
+    return false;
 }
 
 void CircleClass::Reset(float x, float y, float velX, float velY)
@@ -470,10 +496,7 @@ void CircleClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
 bool CircleClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* filename)
 {
     bool result;
-
-    // Create and initialize the texture object
     m_Texture = new TextureClass;
-
     result = m_Texture->Initialize(device, deviceContext, filename);
     if (!result)
     {

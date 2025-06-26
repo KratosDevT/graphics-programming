@@ -51,6 +51,8 @@ public:
     void TurnZBufferOn();
     void TurnZBufferOff();
 
+    IDXGISwapChain* GetSwapChain() { return m_swapChain; }
+
 private:
     bool m_vsync_enabled;
     int m_videoCardMemory;

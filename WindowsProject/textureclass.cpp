@@ -10,11 +10,9 @@ TextureClass::TextureClass()
 	m_textureView = 0;
 }
 
-
 TextureClass::TextureClass(const TextureClass& other)
 {
 }
-
 
 TextureClass::~TextureClass()
 {
@@ -58,6 +56,7 @@ bool TextureClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceC
 
 	// Set the row pitch of the targa image data.
 	rowPitch = (m_width * 4) * sizeof(unsigned char);
+
 	// Copy the targa image data into the texture.
 	deviceContext->UpdateSubresource(m_texture, 0, NULL, m_targaData, rowPitch, 0);
 

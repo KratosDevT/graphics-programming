@@ -1,55 +1,51 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Filename: bitmapclass.cpp
+// Filename: fontclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
-#include "bitmapclass.h"
+#include "fontclass.h"
 
-BitmapClass::BitmapClass()
+FontClass::FontClass()
 {
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
     m_Texture = 0;
-    m_offsetPaddlePosition = 10;
-	m_bitmapWidth = 0;
-    m_bitmapHeight = 0;
+    m_fontWidth = 0;
+    m_fontHeight = 0;
     m_screenWidth = 0;
     m_screenHeight = 0;
     m_renderX = 0;
     m_renderY = 0;
     m_prevPosX = -1;
-	m_prevPosY = -1;
+    m_prevPosY = -1;
 }
 
-
-BitmapClass::BitmapClass(const BitmapClass& other)
+FontClass::FontClass(const FontClass& other)
 {
 }
 
-
-BitmapClass::~BitmapClass()
+FontClass::~FontClass()
 {
 }
 
-
-bool BitmapClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, int screenWidth, int screenHeight, char* textureFilename, int renderX, int renderY)
+bool FontClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext,
+    int screenWidth, int screenHeight, char* textureFilename,
+    int renderX, int renderY)
 {
     bool result;
 
-    // Store the screen size.
+    // Store the screen size and render position
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
-
-    // Store where the bitmap should be rendered to.
     m_renderX = renderX;
     m_renderY = renderY;
 
-    // Initialize the vertex and index buffer that hold the geometry for the bitmap quad.
+    // Initialize the vertex and index buffers
     result = InitializeBuffers(device);
     if (!result)
     {
         return false;
     }
 
-    // Load the texture for this bitmap.
+    // Load the font texture
     result = LoadTexture(device, deviceContext, textureFilename);
     if (!result)
     {
@@ -59,46 +55,52 @@ bool BitmapClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceCo
     return true;
 }
 
-void BitmapClass::Shutdown()
+void FontClass::Shutdown()
 {
-    // Release the bitmap texture.
+    // Release the font texture
     ReleaseTexture();
 
-    // Release the vertex and index buffers.
+    // Release the vertex and index buffers
     ShutdownBuffers();
 
     return;
 }
 
-bool BitmapClass::Render(ID3D11DeviceContext* deviceContext)
+bool FontClass::Render(ID3D11DeviceContext* deviceContext)
 {
     bool result;
 
-
-    // Update the buffers if the position of the bitmap has changed from its original position.
+    // Update the buffers if the position has changed
     result = UpdateBuffers(deviceContext);
     if (!result)
     {
         return false;
     }
 
-    // Put the vertex and index buffers on the graphics pipeline to prepare them for drawing.
+    // Put the vertex and index buffers on the graphics pipeline
     RenderBuffers(deviceContext);
 
     return true;
 }
 
-int BitmapClass::GetIndexCount()
+int FontClass::GetIndexCount()
 {
     return m_indexCount;
 }
 
-ID3D11ShaderResourceView* BitmapClass::GetTexture()
+ID3D11ShaderResourceView* FontClass::GetTexture()
 {
     return m_Texture->GetTexture();
 }
 
-bool BitmapClass::InitializeBuffers(ID3D11Device* device)
+void FontClass::SetRenderLocation(int x, int y)
+{
+    m_renderX = x;
+    m_renderY = y;
+    return;
+}
+
+bool FontClass::InitializeBuffers(ID3D11Device* device)
 {
     VertexType* vertices;
     unsigned long* indices;
@@ -107,32 +109,32 @@ bool BitmapClass::InitializeBuffers(ID3D11Device* device)
     HRESULT result;
     int i;
 
-    // Initialize the previous rendering position to negative one.
+    // Initialize the previous rendering position to negative one
     m_prevPosX = -1;
     m_prevPosY = -1;
 
-    // Set the number of vertices in the vertex array.
+    // Set the number of vertices in the vertex array
     m_vertexCount = 6;
 
-    // Set the number of indices in the index array.
+    // Set the number of indices in the index array
     m_indexCount = m_vertexCount;
 
-    // Create the vertex array.
+    // Create the vertex array
     vertices = new VertexType[m_vertexCount];
 
-    // Create the index array.
+    // Create the index array
     indices = new unsigned long[m_indexCount];
 
-    // Initialize vertex array to zeros at first.
+    // Initialize vertex array to zeros at first
     memset(vertices, 0, (sizeof(VertexType) * m_vertexCount));
 
-    // Load the index array with data.
+    // Load the index array with data
     for (i = 0; i < m_indexCount; i++)
     {
         indices[i] = i;
     }
 
-    // Set up the description of the dynamic vertex buffer.
+    // Set up the description of the dynamic vertex buffer
     vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -140,19 +142,19 @@ bool BitmapClass::InitializeBuffers(ID3D11Device* device)
     vertexBufferDesc.MiscFlags = 0;
     vertexBufferDesc.StructureByteStride = 0;
 
-    // Give the subresource structure a pointer to the vertex data.
+    // Give the subresource structure a pointer to the vertex data
     vertexData.pSysMem = vertices;
     vertexData.SysMemPitch = 0;
     vertexData.SysMemSlicePitch = 0;
 
-    // Now finally create the vertex buffer.
+    // Create the vertex buffer
     result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
     if (FAILED(result))
     {
         return false;
     }
 
-    // Set up the description of the index buffer.
+    // Set up the description of the index buffer
     indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
     indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_indexCount;
     indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -160,19 +162,19 @@ bool BitmapClass::InitializeBuffers(ID3D11Device* device)
     indexBufferDesc.MiscFlags = 0;
     indexBufferDesc.StructureByteStride = 0;
 
-    // Give the subresource structure a pointer to the index data.
+    // Give the subresource structure a pointer to the index data
     indexData.pSysMem = indices;
     indexData.SysMemPitch = 0;
     indexData.SysMemSlicePitch = 0;
 
-    // Create the index buffer.
+    // Create the index buffer
     result = device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
     if (FAILED(result))
     {
         return false;
     }
 
-    // Release the arrays now that the vertex and index buffers have been created and loaded.
+    // Release the arrays now that the buffers have been created
     delete[] vertices;
     vertices = 0;
 
@@ -182,16 +184,16 @@ bool BitmapClass::InitializeBuffers(ID3D11Device* device)
     return true;
 }
 
-void BitmapClass::ShutdownBuffers()
+void FontClass::ShutdownBuffers()
 {
-    // Release the index buffer.
+    // Release the index buffer
     if (m_indexBuffer)
     {
         m_indexBuffer->Release();
         m_indexBuffer = 0;
     }
 
-    // Release the vertex buffer.
+    // Release the vertex buffer
     if (m_vertexBuffer)
     {
         m_vertexBuffer->Release();
@@ -201,7 +203,7 @@ void BitmapClass::ShutdownBuffers()
     return;
 }
 
-bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContent)
+bool FontClass::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 {
     float left, right, top, bottom;
     VertexType* vertices;
@@ -209,32 +211,27 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContent)
     VertexType* dataPtr;
     HRESULT result;
 
-    // Se la posizione e la dimensione non sono cambiate, non aggiornare
+    // If the position hasn't changed then don't update the vertex buffer
     if ((m_prevPosX == m_renderX) && (m_prevPosY == m_renderY))
     {
         return true;
     }
 
-    // Aggiorna la posizione precedente
+    // Update the previous position
     m_prevPosX = m_renderX;
     m_prevPosY = m_renderY;
 
-    // Crea l'array di vertici
+    // Create the vertex array
     vertices = new VertexType[m_vertexCount];
 
-    // Calcola le coordinate dello schermo
+    // Calculate the screen coordinates of the font
     left = (float)((m_screenWidth / 2) * -1) + (float)m_renderX;
-
-    // Usa dimensioni personalizzate se impostate, altrimenti usa quelle originali
-    int currentWidth = m_bitmapWidth;
-    int currentHeight = m_bitmapHeight;
-
-    right = left + (float)currentWidth;
+    right = left + (float)m_fontWidth;
     top = (float)(m_screenHeight / 2) - (float)m_renderY;
-    bottom = top - (float)currentHeight;
+    bottom = top - (float)m_fontHeight;
 
-    // Carica l'array di vertici con i dati
-    // Primo triangolo
+    // Load the vertex array with data for the two triangles of the quad
+    // First triangle
     vertices[0].position = XMFLOAT3(left, top, 0.0f);      // Top left
     vertices[0].texture = XMFLOAT2(0.0f, 0.0f);
 
@@ -244,7 +241,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContent)
     vertices[2].position = XMFLOAT3(left, bottom, 0.0f);   // Bottom left
     vertices[2].texture = XMFLOAT2(0.0f, 1.0f);
 
-    // Secondo triangolo
+    // Second triangle
     vertices[3].position = XMFLOAT3(left, top, 0.0f);      // Top left
     vertices[3].texture = XMFLOAT2(0.0f, 0.0f);
 
@@ -254,58 +251,56 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* deviceContent)
     vertices[5].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right
     vertices[5].texture = XMFLOAT2(1.0f, 1.0f);
 
-    // Lock del vertex buffer
-    result = deviceContent->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    // Lock the vertex buffer
+    result = deviceContext->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (FAILED(result))
     {
         delete[] vertices;
         return false;
     }
 
-    // Ottieni un puntatore ai dati nel buffer
+    // Get a pointer to the data in the vertex buffer
     dataPtr = (VertexType*)mappedResource.pData;
 
-    // Copia i dati nel vertex buffer
+    // Copy the data into the vertex buffer
     memcpy(dataPtr, (void*)vertices, (sizeof(VertexType) * m_vertexCount));
 
-    // Unlock del vertex buffer
-    deviceContent->Unmap(m_vertexBuffer, 0);
+    // Unlock the vertex buffer
+    deviceContext->Unmap(m_vertexBuffer, 0);
 
-    // Pulisci
-    dataPtr = 0;
+    // Release the vertex array
     delete[] vertices;
     vertices = 0;
 
     return true;
 }
 
-void BitmapClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
+void FontClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
 {
     unsigned int stride;
     unsigned int offset;
 
-
-    // Set vertex buffer stride and offset.
+    // Set vertex buffer stride and offset
     stride = sizeof(VertexType);
     offset = 0;
 
-    // Set the vertex buffer to active in the input assembler so it can be rendered.
+    // Set the vertex buffer to active in the input assembler
     deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
 
-    // Set the index buffer to active in the input assembler so it can be rendered.
+    // Set the index buffer to active in the input assembler
     deviceContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+    // Set the type of primitive that should be rendered from this vertex buffer
     deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     return;
 }
 
-bool BitmapClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* filename)
+bool FontClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* filename)
 {
     bool result;
 
-    // Create and initialize the texture object.
+    // Create and initialize the texture object
     m_Texture = new TextureClass;
 
     result = m_Texture->Initialize(device, deviceContext, filename);
@@ -314,16 +309,16 @@ bool BitmapClass::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceC
         return false;
     }
 
-    // Store the size in pixels that this bitmap should be rendered at.
-    m_bitmapWidth = m_Texture->GetWidth();
-    m_bitmapHeight = m_Texture->GetHeight();
+    // Store the size in pixels that this font should be rendered at
+    m_fontWidth = m_Texture->GetWidth();
+    m_fontHeight = m_Texture->GetHeight();
 
     return true;
 }
 
-void BitmapClass::ReleaseTexture()
+void FontClass::ReleaseTexture()
 {
-    // Release the texture object.
+    // Release the texture object
     if (m_Texture)
     {
         m_Texture->Shutdown();
@@ -332,26 +327,4 @@ void BitmapClass::ReleaseTexture()
     }
 
     return;
-}
-
-void BitmapClass::SetRenderLocation(int x, int y)
-{
-    if ((x < m_offsetPaddlePosition) || (x + m_bitmapWidth + m_offsetPaddlePosition >= m_screenWidth))
-    {
-        return;
-    }
-
-    m_renderX = x;
-    m_renderY = y;
-    return;
-}
-
-int BitmapClass::GetWidth()
-{
-    return m_bitmapWidth;
-}
-
-int BitmapClass::GetHeight()
-{
-    return m_bitmapHeight;
 }

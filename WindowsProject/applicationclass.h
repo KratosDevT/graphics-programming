@@ -6,11 +6,14 @@
 #ifndef _APPLICATIONCLASS_H_
 #define _APPLICATIONCLASS_H_
 
-
 //////////////
 // INCLUDES //
 //////////////
 //#include <windows.h>
+#include <d2d1.h>
+#include <dwrite.h>
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 
 ///////////////////////
 // MY CLASS INCLUDES //
@@ -21,8 +24,7 @@
 #include "bitmapclass.h"
 #include "circleclass.h"
 #include "brickclass.h"
-//#include "modelclass.h"
-
+#include "fontclass.h"
 
 /////////////
 // GLOBALS //
@@ -36,6 +38,7 @@ const float SCREEN_NEAR = 0.3f;
 // Class name: ApplicationClass
 ////////////////////////////////////////////////////////////////////////////////
 // ApplicationClass is the main class that is used to render the scene by invoking all the needed class objects for the project.
+
 class ApplicationClass
 {
 public:
@@ -44,39 +47,63 @@ public:
 	~ApplicationClass();
 
 	bool Initialize(int, int, HWND);
+	bool InitializeBlocksGrid(int screenWidth, int screenHeight, char  brickFilename[128], int distanceFromTop);
 	void Shutdown();
 	bool Frame();
 
-	void ResizeBitmap(int width, int height);
-	void MoveBitmap(int x, int y);
-	void UpdateCircle(float deltaTime);
+	void MovePaddleLeft();
+	void MovePaddleRight();
 
-	void CheckBrickCollisions();
+	void UpdateBall(float deltaTime);
+	void LaunchBall();
+	void AttachBallToPaddle();
+	bool IsBallAttached() { return m_ballAttachedToPaddle; }
 
-	bool IsGameWon() { return m_remainingBricks <= 0; }
-	bool IsGameOver();  // Controlla se la palla è uscita dal fondo
-	void ResetGame();   // Resetta tutto per una nuova partita
-	int GetRemainingBricks() { return m_remainingBricks; }
+	void CheckCollisionsBallWithBricks();
+	int GetRemainingBricks();
+
+	void CheckGameWon();
+	bool IsGameOver();
+	bool IsGameWon() { return m_gameWon; }
+	void ResetGame();
+
+	void UpdateFontVisibility();
 
 private:
 	bool Render();
 
 private:
-	D3DClass* m_Direct3D; //prefix m_ on all class variables.
+	//prefix m_ on all class variables.
+
+	D3DClass* m_Direct3D; 
 	CameraClass* m_Camera;
 	BitmapClass* m_Bitmap;
-	//ModelClass* m_Model;
 	TextureShaderClass* m_TextureShader;
 	int m_remainingBricks;
 	CircleClass* m_Circle;
 
-	static const int BRICK_ROWS = 5;
+	static const int BRICK_ROWS = 4;
 	static const int BRICK_COLS = 10;
 	static const int BRICK_WIDTH = 70;
 	static const int BRICK_HEIGHT = 25;
 	static const int BRICK_SPACING = 5;
+	static const int DISTANCE_BRICK_FROM_TOP = 60;
+	static const int INIT_OFFSET_BALL_FROM_PADDLE = 15;
 
 	BrickClass* m_Bricks[BRICK_ROWS][BRICK_COLS];
+
+	bool m_ballAttachedToPaddle;    
+	bool m_gameStarted;    
+	bool m_gameWon;
+
+	float m_ballOffsetFromPaddle;
+
+	//per il testo a schermo
+	FontClass* m_FontStart;        // "PRESS SPACE TO START"
+	FontClass* m_FontBricks;       // "BRICKS: XX" da fare
+	FontClass* m_FontVictory;	  // "YOU WON!" press r to restart
+	bool m_showStartText;
+	bool m_showEndText;
 };
 
 #endif

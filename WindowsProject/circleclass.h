@@ -26,7 +26,7 @@ public:
     CircleClass(const CircleClass&);
     ~CircleClass();
 
-    bool Initialize(ID3D11Device*, ID3D11DeviceContext*, int, int, char*, float, float, float);
+    bool Initialize(ID3D11Device*, ID3D11DeviceContext*, int, int, char*, float, float, float, float ,float);
     void Shutdown();
     bool Render(ID3D11DeviceContext*);
     void Update(float deltaTime, int screenWidth, int screenHeight);
@@ -37,18 +37,19 @@ public:
     void UpdateWithCollision(float deltaTime, int screenWidth, int screenHeight,
         int rectX, int rectY, int rectWidth, int rectHeight);
 
+    void OldBounceStrategy(float rectLeft, float rectRight, float rectTop, float rectBottom, float& nextX, float& nextY);
+    void BounceFromPaddle(float& nextX, float& nextY);
+    bool CheckCollisionWithScreenBoundary(float& nextX, float& nextY, int screenWidth);
+
     void Reset(float x, float y, float velX = 150.0f, float velY = -100.0f);
 
-    // Getters per posizione e dimensioni
     float GetX() { return m_positionX; }
     float GetY() { return m_positionY; }
     float GetRadius() { return m_radius; }
-
-    // Metodi per controllare le collisioni con i blocchetti
+    
     void ReverseVelocityX() { m_velocityX = -m_velocityX; }
     void ReverseVelocityY() { m_velocityY = -m_velocityY; }
 
-    // Getters per velocity (utili per debug)
     float GetVelocityX() { return m_velocityX; }
     float GetVelocityY() { return m_velocityY; }
 
